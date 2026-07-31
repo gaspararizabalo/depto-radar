@@ -1,0 +1,24 @@
+{
+  "name": "drecksau-online",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Juego de cartas multijugador online 1v1 (mecanica tipo Drecksau). Nombre y arte son placeholder.",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "npm run build -w @drecksau/engine && concurrently -n server,web -c cyan,magenta \"npm run dev -w @drecksau/server\" \"npm run dev -w @drecksau/web\"",
+    "build": "npm run build -w @drecksau/engine && npm run build -w @drecksau/server && npm run build -w @drecksau/web",
+    "start": "node apps/server/dist/index.js",
+    "test": "npm run test -w @drecksau/engine",
+    "typecheck": "tsc -b packages/engine apps/server apps/web"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  }
+}
