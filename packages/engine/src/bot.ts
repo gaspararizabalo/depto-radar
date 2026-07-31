@@ -41,7 +41,7 @@ interface Weights {
  */
 const PROFILES: Record<Difficulty, Weights> = {
   facil: { blunder: 0.45 },
-  normal: { blunder: 0.15 },
+  normal: { blunder: 0.28 },
   dificil: { blunder: 0 },
 }
 

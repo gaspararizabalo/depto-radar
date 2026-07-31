@@ -95,7 +95,7 @@ Eso hace los tests reproducibles y deja la puerta abierta a replays.
 
 ## Las reglas
 
-Cada jugador tiene 3 cerdos limpios y 3 cartas en mano. En tu turno jugás una
+Cada jugador tiene 3 cerdos limpios y 5 cartas en mano. En tu turno jugás una
 carta y robás. **Si tenés alguna jugada legal, estás obligado a jugarla** — solo
 podés descartar cuando no tenés ninguna. Sin esa regla, dos jugadores podrían
 descartar en loop para siempre.
@@ -128,52 +128,66 @@ actual sobre 4000 partidas:
 
 | métrica | valor | lectura |
 |---|---|---|
-| duración media | 16.5 turnos | bien: partidas de 3-5 min |
-| p90 / p99 | 33 / 48 turnos | sin colas largas |
-| **gana el que abre** | **57.1%** | demasiado para partida única |
-| mano inicial injugable | 22.7% | 1 de cada 5 arranca descartando |
+| duración media | ~20 turnos | partidas de 3-5 min |
+| gana el que abre (ronda) | ~60% | se neutraliza en la serie |
+| **gana el que abre (serie)** | **48-51%** | el mejor de 3 lo resuelve |
+| mano inicial injugable | 7.8% | era 24% con mano de 3 |
+| turnos forzados | 22.2% | era 45.7% con mano de 3 |
 | empates | 0% | siempre hay resultado |
 
 **Por eso se juega al mejor de 3**, con primer jugador alternado y sorteo fresco
 en el desempate. Con partida única el resultado lo decidía el sorteo inicial.
-
-El 22.7% de manos muertas es el próximo candidato a tunear: al empezar, **solo el
-barro es jugable** (no hay nada sucio que techar, lavar ni volar), así que una mano
-sin barro es un turno perdido. La solución más limpia es garantizar al menos un
-barro en la mano inicial.
 
 Las perillas están todas en `packages/engine/src/config.ts`.
 
 > El bot no defiende ni guarda cartas para el momento justo. Los números sirven
 > para **comparar** entre cambios de balance, no para predecir el juego real.
 
-### El juego tiene poca profundidad de decisión
+### Profundidad de decisión: por qué la mano es de 5
 
-Midiendo los bots entre sí (`test/bot.test.ts`), el que juega siempre la mejor
-jugada le gana al que tira al azar el 45% de las veces por apenas **55.3%**:
+La primera versión repartía manos de 3 y el juego se sentía una carrera: agarrás
+barro, lo tirás, listo. Medido, era cierto — **el 45.7% de los turnos tenía una
+sola jugada legal**. No había nada que decidir.
 
-| enfrentamiento | winrate |
-|---|---|
-| difícil vs voraz | 57.3% |
-| difícil vs fácil | 55.3% |
-| normal vs fácil | 52.5% |
-| normal vs difícil | 48.8% |
+La intuición natural es bajar el barro para que no sea una carrera. Está medido y
+hace exactamente lo contrario:
 
-Que la brecha entre "juega perfecto" y "juega casi al azar" sea de 5 puntos dice
-algo del juego, no del bot: con manos de 3 cartas y la regla de jugar obligado,
-la mayoría de los turnos tienen una o dos opciones legales y casi siempre la
-obvia es barro. **Hay pocas decisiones reales por partida.**
+| barro | opciones/turno | turnos forzados | turnos/ronda | manos muertas |
+|---|---|---|---|---|
+| 21 (actual) | 1.74 | 45.7% | 19.1 | 24.4% |
+| 16 | 1.63 | 53.5% | 34.2 | 35.2% |
+| 12 | 1.53 | 60.0% | 68.4 | 48.4% |
+| 10 | 1.47 | 63.8% | 106.4 | 54.4% |
 
-Importa para el producto: un juego así aguanta mal una ladder competitiva, porque
-el ranking termina midiendo el reparto más que la habilidad. Si el ranked va en
-serio, esto es lo primero a atacar — manos más grandes o más cartas de respuesta.
-Para partidas casuales entre amigos no molesta en absoluto.
+El barro es la única carta casi siempre jugable. Sacándolo aumentan las manos de
+establos sin cerdo sucio que techar y granjeros sin objetivo, o sea **más** turnos
+sin decisión, con rondas cinco veces más largas de yapa.
 
-> Al medir bots, **alterná quién abre**. Abrir vale ~7 puntos: si un bando abre
-> siempre, no estás midiendo al bot sino al sorteo. El test de simetría
-> (`winrate(x,y) + winrate(y,x) ≈ 100%`) existe para atrapar exactamente ese error.
+La palanca que sí funciona es el tamaño de la mano:
 
----
+| mano | opciones/turno | turnos forzados | ≥3 opciones | manos muertas | brecha | turnos/ronda |
+|---|---|---|---|---|---|---|
+| 3 | 1.74 | 45.7% | 19.9% | 24.4% | 56.2% | 19.1 |
+| **5** | **2.77** | **22.2%** | **57.7%** | **7.8%** | **63.8%** | **19.9** |
+
+Los turnos forzados se parten a la mitad, los turnos con tres o más opciones casi
+se triplican, las manos iniciales injugables bajan de 24% a 8% — y la duración de
+la ronda no se mueve. Sale gratis.
+
+"brecha" es el winrate del bot óptimo contra uno que tira al azar el 45% de las
+veces: cuánto pesa jugar bien. Con la mano de 5 subió de 56% a 64%, y contra el
+bot voraz del motor llega a 72%.
+
+**La ventaja de abrir se mide a nivel serie, no de ronda.** Por ronda es ~60%, que
+asusta, pero al mejor de 3 con primer jugador alternado y sorteo en el desempate
+queda en 48-51%. Cualquier cambio de balance hay que evaluarlo con esa métrica.
+
+### Si querés rondas más largas
+
+Subir a 4 cerdos por jugador es la palanca directa: la brecha sube a 67.8% (más
+lugar donde jugar bien importa) pero las rondas se van de 20 a 37 turnos, o sea
+series de ~10 minutos. Es un cambio de una línea en `config.ts`; la decisión es de
+producto, no de datos.
 
 ## Reconexión y abandonos
 

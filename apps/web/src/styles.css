@@ -709,18 +709,25 @@ input {
   color: var(--gold);
 }
 
+/* La mano reparte el ancho disponible entre las cartas que haya. Con ancho fijo,
+   5 cartas no entraban en un telefono de 390px y el tablero desbordaba. */
 .hand {
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  gap: 0.5rem;
+  gap: clamp(0.25rem, 1.2vw, 0.5rem);
   padding: 0.3rem 0.2rem 0.5rem;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
   perspective: 900px;
 }
 
 .card {
   position: relative;
-  width: clamp(84px, 21vw, 122px);
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 122px;
   aspect-ratio: 5 / 7;
   border-radius: var(--r-md);
   padding: 0.55rem 0.4rem 0.5rem;
@@ -766,10 +773,18 @@ input {
   display: grid;
   place-items: center;
   flex: 1;
+  width: 100%;
+}
+
+/* El icono escala con la carta: si no, en pantallas chicas se sale del borde. */
+.card-icon svg {
+  width: 58%;
+  height: auto;
+  max-width: 42px;
 }
 
 .card-name {
-  font-size: clamp(0.6rem, 2.4vw, 0.74rem);
+  font-size: clamp(0.52rem, 2.1vw, 0.74rem);
   font-weight: 800;
   letter-spacing: 0.02em;
   text-align: center;
@@ -1126,7 +1141,7 @@ input {
     width: clamp(56px, 12vw, 84px);
   }
   .card {
-    width: clamp(74px, 17vw, 100px);
+    max-width: 100px;
   }
 }
 
@@ -1196,10 +1211,6 @@ input {
 
   .pig {
     width: clamp(64px, 20vw, 92px);
-  }
-
-  .card {
-    width: clamp(80px, 25vw, 104px);
   }
 
   .hint {

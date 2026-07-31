@@ -280,7 +280,8 @@ describe('flujo de turno', () => {
 
   it('roba del mazo hasta completar la mano', () => {
     const g = newGame(1, 0)
-    g.players[0].hand = [testCard('MUD'), testCard('MUD'), testCard('MUD')]
+    // Mano llena de barro, del tamaño que diga la config (no hardcodeamos 3).
+    g.players[0].hand = Array.from({ length: DEFAULT_CONFIG.handSize }, () => testCard('MUD'))
     const deckBefore = g.deck.length
 
     const move = legalMoves(g)[0]!
@@ -394,18 +395,39 @@ describe('observaciones de balance', () => {
     expect(isPlayable(g, 0, 'MUD')).toBe(true)
   })
 
-  it('mide cuantas manos iniciales arrancan muertas (sin barro)', () => {
-    // Con 21 barros sobre 54 cartas da ~22%. Es alto: uno de cada cinco jugadores
-    // arranca sin poder hacer nada. Candidato numero uno a tunear (subir MUD o
-    // repartir manos iniciales con al menos un barro garantizado).
+  it('casi ninguna mano inicial arranca muerta', () => {
+    // Con mano de 3 esto daba 24%: uno de cada cuatro jugadores abría sin poder
+    // hacer nada, que es el peor primer contacto posible. Con mano de 5 baja a
+    // ~8%. Si algún día vuelve a subir de 15%, algo se rompió en el reparto.
     let dead = 0
-    const samples = 400
+    const samples = 600
     for (let seed = 0; seed < samples; seed++) {
       if (legalMoves(newGame(seed, 0)).length === 0) dead++
     }
     const rate = dead / samples
-    expect(rate).toBeGreaterThan(0.1)
-    expect(rate).toBeLessThan(0.35)
+    expect(rate).toBeLessThan(0.15)
+  })
+
+  it('la mayoría de los turnos ofrece más de una jugada', () => {
+    // La métrica que define si hay algo que decidir. Con mano de 3 el 45.7% de
+    // los turnos tenía una sola opción legal; con mano de 5 es el 22%.
+    let turns = 0
+    let forced = 0
+    for (let seed = 0; seed < 250; seed++) {
+      let g = newGame(seed, 0)
+      let guard = 0
+      while (g.status === 'playing' && guard++ < 500) {
+        const n = legalMoves(g).length
+        if (n > 0) {
+          turns++
+          if (n === 1) forced++
+        }
+        const a = autoAction(g)
+        if (!a) break
+        g = must(g, a)
+      }
+    }
+    expect(forced / turns).toBeLessThan(0.32)
   })
 
   it('las partidas automaticas terminan en una cantidad razonable de turnos', () => {

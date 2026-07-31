@@ -31,8 +31,22 @@ Después de cambiarlos, corré:
 npm run balance -w @drecksau/engine
 ```
 
-y comparalo contra la tabla del README. Si la duración media se dispara o la
-ventaja de abrir se va por encima de ~60%, el cambio empeoró el juego.
+y comparalo contra la tabla del README.
+
+Dos trampas ya pisadas, para no repetirlas:
+
+**No bajes el barro para que "no sea una carrera".** Está medido: sube los turnos
+forzados (45% → 64%) y multiplica por cinco la duración de la ronda. El barro es
+la única carta casi siempre jugable; sacarlo deja más manos sin nada que hacer.
+La palanca para dar profundidad es `handSize`.
+
+**La ventaja de abrir se mide en la SERIE, no en la ronda.** Por ronda da ~60% y
+parece roto, pero el mejor de 3 con alternancia la deja en ~50%. Si medís por
+ronda vas a "arreglar" algo que no está roto.
+
+Y si comparás bots entre sí, alterná quién abre: abrir vale ~7 puntos y si no lo
+hacés estás midiendo el sorteo. El test de simetría en `test/bot.test.ts` existe
+para atrapar ese error.
 
 ## Flujo
 
