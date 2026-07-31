@@ -1,0 +1,22 @@
+# Deploy en Render (https://render.com) — soporta WebSocket y proceso persistente.
+#
+# Desde el celular:
+#   1. render.com -> New -> Blueprint
+#   2. Conectá este repo y elegí la rama
+#   3. Render lee este archivo y levanta todo solo
+#
+# El plan free duerme tras ~15 min sin trafico: la primera visita despues de un
+# rato tarda ~30s en despertar. Para probar alcanza.
+services:
+  - type: web
+    name: drecksau
+    runtime: node
+    plan: free
+    # El engine tiene que compilarse antes que server y web: los dos lo importan
+    # desde dist/. El script `build` de la raiz ya respeta ese orden.
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"

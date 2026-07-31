@@ -32,6 +32,38 @@ export const DEFAULT_CONFIG: GameConfig = {
   deck: DEFAULT_DECK,
 }
 
+/**
+ * Reglas de la SERIE (no de la ronda). Viven en el motor y no en el servidor
+ * porque también las necesita el modo contra la máquina, que corre entero en el
+ * navegador. Si esto se duplicara, tarde o temprano las dos copias divergirían.
+ */
+export const SERIES = {
+  /** Rondas para llevarse la serie. 2 = al mejor de 3. */
+  target: 2,
+  turnMs: 30_000,
+  roundBreakMs: 4_500,
+  /** Tres timeouts seguidos y se pierde la serie entera. */
+  maxConsecutiveTimeouts: 3,
+} as const
+
+/**
+ * Quién abre la próxima ronda.
+ *
+ * Se alterna, salvo en la ronda decisiva (empate a `target - 1`), donde se
+ * sortea de nuevo: si alternáramos, uno llegaría al desempate habiendo abierto
+ * dos veces, y abrir da ~57% de winrate. Ver la tabla de balance del README.
+ */
+export function nextFirstPlayer(
+  previousFirst: 0 | 1,
+  scores: readonly [number, number],
+  target: number = SERIES.target,
+  coinFlip: () => boolean = () => Math.random() < 0.5,
+): 0 | 1 {
+  const isDecider = scores[0] === scores[1] && scores[0] === target - 1
+  if (isDecider) return coinFlip() ? 0 : 1
+  return previousFirst === 0 ? 1 : 0
+}
+
 export const CARD_KINDS: CardKind[] = [
   'MUD',
   'RAIN',

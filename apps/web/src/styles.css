@@ -1034,6 +1034,60 @@ input {
   }
 }
 
+/* ============================ selector de nivel ============================ */
+
+.level-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.45rem;
+}
+
+.level {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.6rem 0.4rem;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.24);
+  transition: all 0.18s var(--ease);
+  text-align: center;
+}
+
+.level:hover {
+  border-color: #4d3f33;
+}
+
+.level-on {
+  border-color: var(--pig-deep);
+  background: rgba(212, 114, 142, 0.14);
+  box-shadow: 0 0 0 2px rgba(212, 114, 142, 0.18);
+}
+
+.level-name {
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.level-hint {
+  font-size: 0.62rem;
+  color: var(--faint);
+  line-height: 1.25;
+}
+
+.level-on .level-hint {
+  color: var(--muted);
+}
+
+.solo-note {
+  margin: 1.5rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line-soft);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--faint);
+}
+
 /* ============================ como se juega ============================ */
 
 .rules {

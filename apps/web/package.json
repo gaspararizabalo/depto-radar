@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:solo": "vite build --config vite.solo.config.ts && node scripts/build-solo.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

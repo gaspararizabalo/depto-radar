@@ -2,6 +2,8 @@ import {
   applyAction,
   autoAction,
   createGame,
+  nextFirstPlayer,
+  SERIES,
   viewFor,
   type Action,
   type GameState,
@@ -9,17 +11,15 @@ import {
   type ServerMessage,
 } from '@drecksau/engine'
 
-/** Reloj de turno. Corto a proposito: queremos partidas de 3-5 minutos. */
-export const TURN_MS = 30_000
-/** Pausa entre rondas para que se vea quien gano antes de repartir de nuevo. */
-export const ROUND_BREAK_MS = 4_500
-/** Rondas para llevarse la serie (2 = al mejor de 3). */
-export const SERIES_TARGET = 2
-/**
- * Tres timeouts SEGUIDOS y se pierde la serie. Sin esto, alguien que deja la
- * pestania abierta obliga al rival a comerse 30s por turno hasta el final.
+/*
+ * Las constantes de la serie viven en el motor (`SERIES`) porque el modo contra
+ * la maquina, que corre en el navegador sin servidor, usa exactamente las mismas.
+ * Se reexportan con estos nombres para no tocar el resto del server.
  */
-export const MAX_CONSECUTIVE_TIMEOUTS = 3
+export const TURN_MS = SERIES.turnMs
+export const ROUND_BREAK_MS = SERIES.roundBreakMs
+export const SERIES_TARGET = SERIES.target
+export const MAX_CONSECUTIVE_TIMEOUTS = SERIES.maxConsecutiveTimeouts
 
 export interface Slot {
   playerId: string
@@ -223,11 +223,7 @@ export class Match {
     const previousFirst = this.firstOfCurrentRound
     this.round += 1
 
-    // Se alterna quien abre. En el desempate (1-1) se sortea de nuevo, para que
-    // ninguno llegue a la ronda decisiva con la ventaja de haber abierto dos veces.
-    const isDecider = this.scores[0] === this.scores[1] && this.scores[0] === SERIES_TARGET - 1
-    const next: 0 | 1 = isDecider ? (Math.random() < 0.5 ? 0 : 1) : previousFirst === 0 ? 1 : 0
-
+    const next = nextFirstPlayer(previousFirst, this.scores, SERIES_TARGET)
     this.state = this.freshRound(next)
     this.consecutiveTimeouts = { [this.players[0].playerId]: 0, [this.players[1].playerId]: 0 }
     this.armTurnTimer()
